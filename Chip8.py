@@ -128,12 +128,6 @@ class Chip8:
 
         self.table[(self.opcode & 0xF000) >> 12]()
 
-        if self.delay_timer > 0:
-            self.delay_timer -= 1
-
-        if self.sound_timer > 0:
-            self.sound_timer -= 1
-
     def loadROM(self, filename):
         with open(filename, "rb") as f:
             rom_data = np.frombuffer(f.read(), dtype=np.uint8)

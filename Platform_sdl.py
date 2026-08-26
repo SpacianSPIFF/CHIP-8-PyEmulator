@@ -47,7 +47,6 @@ class Platform:
         have = sdl2.SDL_AudioSpec(0, 0, 0, 0)
 
         self.audio_device = sdl2.SDL_OpenAudioDevice(None, 0, ctypes.byref(want), ctypes.byref(have), 0)
-        print("audio_device id:", self.audio_device)
         sdl2.SDL_PauseAudioDevice(self.audio_device, 1)
 
         if self.audio_device == 0:

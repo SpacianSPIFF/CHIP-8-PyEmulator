@@ -24,6 +24,7 @@ def main():
     videoPitch = 4 * VIDEO_WIDTH
 
     lastCycleTime = time.perf_counter()
+    lastTimerTime = time.perf_counter()
 
     quit = False
 
@@ -36,15 +37,24 @@ def main():
 
         if dt > cycleDelay:
             lastCycleTime = currentTime
-
             chip8.cycle()
-
             platform.update(chip8.video, videoPitch)
 
+        timerDt = (currentTime - lastTimerTime) * 1000
+
+        if timerDt > (1000.0 / 60.0):
+            lastTimerTime = currentTime
+
+            if chip8.delay_timer > 0:
+                chip8.delay_timer -= 1
+
             if chip8.sound_timer > 0:
-                platform.beep_start()
-            else:
-                platform.beep_stop()
+                chip8.sound_timer -= 1
+
+        if chip8.sound_timer > 0:
+            platform.beep_start()
+        else:
+            platform.beep_stop()
 
     platform.close()
 
