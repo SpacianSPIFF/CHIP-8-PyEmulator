@@ -41,6 +41,11 @@ def main():
 
             platform.update(chip8.video, videoPitch)
 
+            if chip8.sound_timer > 0:
+                platform.beep_start()
+            else:
+                platform.beep_stop()
+
     platform.close()
 
 if __name__ == "__main__":

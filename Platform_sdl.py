@@ -1,9 +1,10 @@
 import sdl2
 import ctypes
+import math
 
 class Platform:
     def __init__(self, title, windowWidth, windowHeight, textureWidth, textureHeight):
-        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO)
+        sdl2.SDL_Init(sdl2.SDL_INIT_VIDEO | sdl2.SDL_INIT_AUDIO)
 
         self.window = sdl2.SDL_CreateWindow(title.encode("utf-8"), sdl2.SDL_WINDOWPOS_CENTERED, sdl2.SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, sdl2.SDL_WINDOW_SHOWN)
 
@@ -32,6 +33,25 @@ class Platform:
             sdl2.SDLK_f: 0xE,
             sdl2.SDLK_v: 0xF,
         }
+
+        self._sample_nr = 0
+        self._audio_callback_ref = sdl2.SDL_AudioCallback(self._audio_callback)
+
+        want = sdl2.SDL_AudioSpec(0, 0, 0, 0)
+        want.freq = 44100
+        want.format = sdl2.AUDIO_S16SYS
+        want.channels = 1
+        want.samples = 2048
+        want.callback = self._audio_callback_ref
+
+        have = sdl2.SDL_AudioSpec(0, 0, 0, 0)
+
+        self.audio_device = sdl2.SDL_OpenAudioDevice(None, 0, ctypes.byref(want), ctypes.byref(have), 0)
+        print("audio_device id:", self.audio_device)
+        sdl2.SDL_PauseAudioDevice(self.audio_device, 1)
+
+        if self.audio_device == 0:
+            print("Failed to open audio device:", sdl2.SDL_GetError().decode("utf-8"))
 
     def __del__(self):
         self.close()
@@ -86,3 +106,18 @@ class Platform:
                     keys[chip8_key] = 0
 
         return quit
+
+    def _audio_callback(self, userdata, stream, length):
+        num_samples = length // 2
+        buffer = ctypes.cast(stream, ctypes.POINTER(ctypes.c_int16))
+
+        for i in range(num_samples):
+            sample_time = self._sample_nr / 44100.0
+            buffer[i] = int(28000 * math.sin(2.0 * math.pi * 441.0 * sample_time))
+            self._sample_nr += 1
+
+    def beep_start(self):
+        sdl2.SDL_PauseAudioDevice(self.audio_device, 0)
+
+    def beep_stop(self):
+        sdl2.SDL_PauseAudioDevice(self.audio_device, 1)
